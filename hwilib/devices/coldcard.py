@@ -5,7 +5,8 @@ from ..hwwclient import HardwareWalletClient
 from ..errors import ActionCanceledError, BadArgumentError, DeviceBusyError, DeviceFailureError, UnavailableActionError, common_err_msgs, handle_errors
 from .ckcc.client import ColdcardDevice, COINKITE_VID, CKCC_PID
 from .ckcc.protocol import CCProtocolPacker, CCBusyError, CCProtoError, CCUserRefused
-from .ckcc.constants import MAX_BLK_LEN, AF_P2WPKH, AF_CLASSIC, AF_P2WPKH_P2SH
+from .ckcc.constants import MAX_BLK_LEN, AF_P2WPKH, AF_CLASSIC, AF_P2WPKH_P2SH, AF_P2WSH, AF_P2SH, AF_P2WSH_P2SH
+from .ckcc.utils import str_to_int_path
 from ..base58 import get_xpub_fingerprint, xpub_main_2_test
 from ..serializations import ExtendedKey, PSBT
 from hashlib import sha256
@@ -16,7 +17,7 @@ import io
 import sys
 import time
 import struct
-from binascii import hexlify
+from binascii import hexlify, a2b_hex, b2a_hex
 
 CC_SIMULATOR_SOCK = '/tmp/ckcc-simulator.sock'
 # Using the simulator: https://github.com/Coldcard/firmware/blob/master/unix/README.md
@@ -178,12 +179,40 @@ class ColdcardClient(HardwareWalletClient):
         keypath = keypath.replace('H', '\'')
 
         if p2sh_p2wpkh:
-            format = AF_P2WPKH_P2SH
+            addr_fmt = AF_P2WSH_P2SH if redeem_script else AF_P2WPKH_P2SH
         elif bech32:
-            format = AF_P2WPKH
+            addr_fmt = AF_P2WSH if redeem_script else AF_P2WPKH
         else:
-            format = AF_CLASSIC
-        address = self.device.send_recv(CCProtocolPacker.show_address(keypath, format), timeout=None)
+            addr_fmt = AF_P2SH if redeem_script else AF_CLASSIC
+
+        if redeem_script:
+            keypaths = keypath.split(',')
+            script = a2b_hex(redeem_script)
+
+            N = len(keypaths)
+
+            assert 1 <= N <= 15, "bad N"
+
+            min_signers = script[0] - 80
+            assert 1 <= min_signers <= N, "bad M"
+
+            assert script[-1] == 0xAE, "expect script to end with OP_CHECKMULTISIG"
+            assert script[-2] == 80+N, "second last byte should encode N"
+
+            xfp_paths = []
+            for xfp in keypaths:
+                assert '/' in xfp, 'Needs a XFP/path: ' + xfp
+                xfp, p = xfp.split('/', 1)
+
+                xfp_paths.append(str_to_int_path(xfp, p))
+
+            payload = CCProtocolPacker.show_p2sh_address(min_signers, xfp_paths, script, addr_fmt=addr_fmt)
+        # single-sig
+        else:
+            payload = CCProtocolPacker.show_address(keypath, addr_fmt=addr_fmt)
+
+        address = self.device.send_recv(payload, timeout=None)
+
         if self.device.is_simulator:
             self.device.send_recv(CCProtocolPacker.sim_keypress(b'y'))
         return {'address': address}
