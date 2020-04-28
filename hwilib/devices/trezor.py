@@ -349,18 +349,40 @@ class TrezorClient(HardwareWalletClient):
         result = btc.sign_message(self.client, 'Bitcoin', path, message)
         return {'signature': base64.b64encode(result.signature).decode('utf-8')}
 
-    # Display address of specified type on the device. Only supports single-key based addresses.
+    # Display address of specified type on the device.
     @trezor_exception
-    def display_address(self, keypath, p2sh_p2wpkh, bech32):
+    def display_address(self, keypath, p2sh_p2wpkh, bech32, redeem_script=None):
         self._check_unlocked()
         expanded_path = tools.parse_path(keypath)
+
+        # redeem_script means p2sh/multisig
+        if redeem_script:
+            # Get multisig object required by Trezor's get_address
+            multisig = parse_multisig(bytes.fromhex(redeem_script))
+            assert multisig[0]
+            multisig = multisig[1]
+        else:
+            multisig = None
+
+        # Script type
+        if p2sh_p2wpkh:
+            script_type = proto.InputScriptType.SPENDP2SHWITNESS
+        elif bech32:
+            script_type = proto.InputScriptType.SPENDWITNESS
+        elif redeem_script:
+            script_type = proto.InputScriptType.SPENDMULTISIG
+        else:
+            script_type = proto.InputScriptType.SPENDADDRESS
+
         address = btc.get_address(
             self.client,
-            "Testnet" if self.is_testnet else "Bitcoin",
+            'Testnet' if self.is_testnet else 'Bitcoin',
             expanded_path,
             show_display=True,
-            script_type=proto.InputScriptType.SPENDWITNESS if bech32 else (proto.InputScriptType.SPENDP2SHWITNESS if p2sh_p2wpkh else proto.InputScriptType.SPENDADDRESS)
+            script_type=script_type,
+            multisig=multisig,
         )
+
         return {'address': address}
 
     # Setup a new device

@@ -170,9 +170,9 @@ class ColdcardClient(HardwareWalletClient):
         sig = str(base64.b64encode(raw), 'ascii').replace('\n', '')
         return {"signature": sig}
 
-    # Display address of specified type on the device. Only supports single-key based addresses.
+    # Display address of specified type on the device.
     @coldcard_exception
-    def display_address(self, keypath, p2sh_p2wpkh, bech32):
+    def display_address(self, keypath, p2sh_p2wpkh, bech32, redeem_script=None):
         self.device.check_mitm()
         keypath = keypath.replace('h', '\'')
         keypath = keypath.replace('H', '\'')
