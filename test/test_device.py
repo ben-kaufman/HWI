@@ -587,7 +587,9 @@ class TestDisplayAddress(DeviceTestCase):
         sh_wsh_multi_addr_redeem_script = self.wrpc.getaddressinfo(sh_multi_addr)['hex']
         wsh_multi_addr_redeem_script = self.wrpc.getaddressinfo(sh_multi_addr)['hex']
 
-        path = pubkeys[2][1:24] + "," + pubkeys[1][1:24] + "," + pubkeys[0][1:24]
+        path = pubkeys[2][1:24] + ',' + pubkeys[1][1:24] + ',' + pubkeys[0][1:24]
+        # need to `'` with `h` for stdin option to work
+        path = path.replace("'", "h")
 
         # legacy
         result = self.do_command(self.dev_args + ['displayaddress', '--path', path, '--redeem_script', sh_multi_addr_redeem_script])
