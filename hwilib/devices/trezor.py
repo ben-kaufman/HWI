@@ -354,12 +354,6 @@ class TrezorClient(HardwareWalletClient):
     def display_address(self, keypath, p2sh_p2wpkh, bech32, redeem_script=None):
         self._check_unlocked()
 
-        # convert device fingerprint to 'm' if exists in path
-        keypath = keypath.replace(self.get_master_fingerprint_hex(), 'm')
-
-        # If given multiple paths take only th first
-        expanded_path = tools.parse_path(keypath.split(',')[0])
-
         # redeem_script means p2sh/multisig
         if redeem_script:
             # Get multisig object required by Trezor's get_address
@@ -379,16 +373,26 @@ class TrezorClient(HardwareWalletClient):
         else:
             script_type = proto.InputScriptType.SPENDADDRESS
 
-        address = btc.get_address(
-            self.client,
-            'Testnet' if self.is_testnet else 'Bitcoin',
-            expanded_path,
-            show_display=True,
-            script_type=script_type,
-            multisig=multisig,
-        )
+        # convert device fingerprint to 'm' if exists in path
+        keypath = keypath.replace(self.get_master_fingerprint_hex(), 'm')
 
-        return {'address': address}
+        for path in keypath.split(','):
+            expanded_path = tools.parse_path(path)
+
+            try:
+                address = btc.get_address(
+                    self.client,
+                    'Testnet' if self.is_testnet else 'Bitcoin',
+                    expanded_path,
+                    show_display=True,
+                    script_type=script_type,
+                    multisig=multisig,
+                )
+                return {'address': address}
+            except Exception as e:
+                pass
+            
+        raise BadArgumentError("No path supplied matched device keys")
 
     # Setup a new device
     @trezor_exception
