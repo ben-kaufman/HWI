@@ -353,6 +353,10 @@ class TrezorClient(HardwareWalletClient):
     @trezor_exception
     def display_address(self, keypath, p2sh_p2wpkh, bech32, redeem_script=None):
         self._check_unlocked()
+
+        # convert device fingerprint to 'm' if exists in path
+        keypath = keypath.replace(self.get_master_fingerprint_hex(), 'm')
+
         expanded_path = tools.parse_path(keypath)
 
         # redeem_script means p2sh/multisig
