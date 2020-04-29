@@ -608,7 +608,7 @@ class TestDisplayAddress(DeviceTestCase):
         self.assertNotIn('error', result)
         self.assertNotIn('code', result)
         self.assertIn('address', result)
-        # removes prefix and checksum since regtest gives 
+        # removes prefix and checksum since regtest gives
         # prefix `bcrt` on Bitcoin Core while wallets return testnet `tb` prefix
         self.assertEqual(wsh_multi_addr[4:58], result['address'][2:56])
 
