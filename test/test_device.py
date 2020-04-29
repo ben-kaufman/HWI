@@ -570,18 +570,18 @@ class TestDisplayAddress(DeviceTestCase):
         sh_wsh_multi_desc = self.wrpc.getdescriptorinfo('sh(wsh(sortedmulti(2,' + pubkeys[0] + ',' + pubkeys[1] + ',' + pubkeys[2] + ')))')['descriptor']
         wsh_multi_desc = self.wrpc.getdescriptorinfo('wsh(sortedmulti(2,' + pubkeys[2] + ',' + pubkeys[1] + ',' + pubkeys[0] + '))')['descriptor']
 
-        sh_multi_import = {'desc': sh_multi_desc, "timestamp": "now", "label": "shmulti"}
-        sh_wsh_multi_import = {'desc': sh_wsh_multi_desc, "timestamp": "now", "label": "shwshmulti"}
+        sh_multi_import = {'desc': sh_multi_desc, "timestamp": "now", "label": "shmulti-display"}
+        sh_wsh_multi_import = {'desc': sh_wsh_multi_desc, "timestamp": "now", "label": "shwshmulti-display"}
         # re-order pubkeys to allow import without "already have private keys" error
-        wsh_multi_import = {'desc': wsh_multi_desc, "timestamp": "now", "label": "wshmulti"}
+        wsh_multi_import = {'desc': wsh_multi_desc, "timestamp": "now", "label": "wshmulti-display"}
         multi_result = self.wrpc.importmulti([sh_multi_import, sh_wsh_multi_import, wsh_multi_import])
         self.assertTrue(multi_result[0]['success'])
         self.assertTrue(multi_result[1]['success'])
         self.assertTrue(multi_result[2]['success'])
 
-        sh_multi_addr = self.wrpc.getaddressesbylabel("shmulti").popitem()[0]
-        sh_wsh_multi_addr = self.wrpc.getaddressesbylabel("shwshmulti").popitem()[0]
-        wsh_multi_addr = self.wrpc.getaddressesbylabel("wshmulti").popitem()[0]
+        sh_multi_addr = self.wrpc.getaddressesbylabel("shmulti-display").popitem()[0]
+        sh_wsh_multi_addr = self.wrpc.getaddressesbylabel("shwshmulti-display").popitem()[0]
+        wsh_multi_addr = self.wrpc.getaddressesbylabel("wshmulti-display").popitem()[0]
 
         sh_multi_addr_redeem_script = self.wrpc.getaddressinfo(sh_multi_addr)['hex']
         sh_wsh_multi_addr_redeem_script = self.wrpc.getaddressinfo(sh_multi_addr)['hex']
