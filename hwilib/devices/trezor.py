@@ -357,7 +357,8 @@ class TrezorClient(HardwareWalletClient):
         # convert device fingerprint to 'm' if exists in path
         keypath = keypath.replace(self.get_master_fingerprint_hex(), 'm')
 
-        expanded_path = tools.parse_path(keypath)
+        # If given multiple paths take only th first
+        expanded_path = tools.parse_path(keypath.split(',')[0])
 
         # redeem_script means p2sh/multisig
         if redeem_script:
