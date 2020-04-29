@@ -389,9 +389,9 @@ class TrezorClient(HardwareWalletClient):
                     multisig=multisig,
                 )
                 return {'address': address}
-            except Exception as e:
+            except:
                 pass
-            
+
         raise BadArgumentError("No path supplied matched device keys")
 
     # Setup a new device
