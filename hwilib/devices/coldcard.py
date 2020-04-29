@@ -1,6 +1,5 @@
 # Coldcard interaction script
 
-from binascii import b2a_hex
 from ..hwwclient import HardwareWalletClient
 from ..errors import ActionCanceledError, BadArgumentError, DeviceBusyError, DeviceFailureError, UnavailableActionError, common_err_msgs, handle_errors
 from .ckcc.client import ColdcardDevice, COINKITE_VID, CKCC_PID
@@ -197,7 +196,7 @@ class ColdcardClient(HardwareWalletClient):
             assert 1 <= min_signers <= N, "bad M"
 
             assert script[-1] == 0xAE, "expect script to end with OP_CHECKMULTISIG"
-            assert script[-2] == 80+N, "second last byte should encode N"
+            assert script[-2] == 80 + N, "second last byte should encode N"
 
             xfp_paths = []
             for xfp in keypaths:
