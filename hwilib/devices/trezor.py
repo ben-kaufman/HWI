@@ -377,6 +377,8 @@ class TrezorClient(HardwareWalletClient):
         keypath = keypath.replace(self.get_master_fingerprint_hex(), 'm')
 
         for path in keypath.split(','):
+            if len(path.split('/')[0]) == 8:
+                path = path.split('/', 1)[1]
             expanded_path = tools.parse_path(path)
 
             try:
